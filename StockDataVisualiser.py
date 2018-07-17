@@ -2,15 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import date
-import quandl
+import quandl #this is a package that can get stock data for us
+import talib # this is a package that can perform technical analysis for us   
 
 # ~/Dropbox/6.\ Python/Python\ Projects/StockData/Financial-Stock-Data-Visual
 
 #the objective of this is to get stock data to enable us to produce the statistics that we want
 #for this we will use quandl - it is easy to use and has its own package
 
-quandl.ApiConfig.api_key = 'EYNDSC9qo_AsccGyr4gR'
-quandl.ApiConfig.api_version = '2015-04-09'
+quandl.ApiConfig.api_key = "EYNDSC9qo_AsccGyr4gR"
 
 #in an excel document we have a list of all acceptable values that can be entered
 available_tickers = pd.read_csv('Data/ticker_list.csv')
@@ -19,7 +19,7 @@ available_tickers = available_tickers[['ticker']]
 
 
 
-#the first part of this script will be confirming inputs
+#the first part of this script will be confirming user inputs
 ############################################
 
 
@@ -141,7 +141,7 @@ def get_start_date(ticker):
 
     #we will present this date to the user to confirm it
     while True:
-        start_confirm = str(input('\nPlease confirm the input is correct [y/n] \nStart Date = {}\nTicker = {}\n'.format(start_date, ticker_confirm)))
+        start_confirm = str(input('\nPlease confirm the input is correct \nStart Date = {}\nTicker = {}\n[y/n]:\n'.format(start_date, ticker_confirm)))
         if start_confirm.lower() == 'y':
             print('Thanks for confirming!\n')
             start_date = start_date
@@ -150,7 +150,6 @@ def get_start_date(ticker):
             #if the user selects no, we will close the script
             print('\nOkay lets get that information again - the system will close, please run again to start\n')
             raise SystemExit
-            break
         else:
             #we will confirm the output
             print('Sorry that was not a valid input - please try again')
@@ -197,7 +196,6 @@ def get_end_date():
             #if the user selects no, we will close the script
             print('\nOkay lets get that information again - the system will close, please run again to start\n')
             raise SystemExit
-            break
         elif end_confirm.lower() == 'y':
             #we will confirm the output
             print('Thanks for confirming!')
@@ -220,24 +218,48 @@ def get_stock_information(ticker, start_date, end_date):
     #we need to find a data service that we can use that will allow us to take stock data
     #we will use Quandl- we have made an account and our API key and data is at the top of this script
 
-    data = quandl.get_table('WIKI/PRICES', ticker = ticker, 
+    stock_data = quandl.get_table('WIKI/PRICES', ticker = ticker, 
                         qopts = { 'columns': ['ticker', 'date', 'adj_close'] }, 
-                        date = { 'gte': str(start_date), 'lte': str(end_date) }, 
-                        paginate=True)
+                        date = { 'gte': str(start_date), 'lte': str(end_date) })
 
-    return data
+    #here we are setting the date as the index which makes it easier to plot, we also dont need the ticker really
+    stock_data.set_index('date', inplace=True)
+    stock_data = stock_data[['adj_close']]
+    
+    return stock_data
 
+
+def macd_calc(stock_data):
+    #the first thing we will work out with our stock data is MACD
+    #the formula we will use to calculate the moving average convergence divergence (macd) is as follows
+    #(12 Day Exponential Moving Average (EMA) - 26 Day EMA)
+    #instead of having to code the whole thing, we can use the talib module and input the below
+
+    macd, macdsignal, macdhist = talib.MACD(stock_data['adj_close'], fastperiod=12, slowperiod=26, signalperiod=9)
+
+    return macd, macdsignal, macdhist
+        
+
+def plot_graphs(stock_data, macd, macdsignal, macdhist):
+    #we can plot some of the data we have made earlier, price and some macd data
+
+    stock_data.plot()
+    macd.plot()
+    macdsignal.plot()
+    macdhist.plot()
+    plt.show()
 
 
 
 
 def main():
+    #this is the main variable where we will run all of the about functions
     ticker = get_ticker()
     start_date = get_start_date(ticker)
     end_date = get_end_date()
-    get_stock_information(ticker, start_date, end_date)
-
-    print(ticker, start_date, end_date)
+    stock_data = get_stock_information(ticker, start_date, end_date)
+    macd, macdsignal, macdhist = macd_calc(stock_data)
+    plot = plot_graphs(stock_data, macd, macdsignal, macdhist)
 
 if __name__ == "__main__":
     main()
@@ -245,10 +267,10 @@ if __name__ == "__main__":
 
 
 #TODO v1
-#import stock data
-#create MACD, RSI calcs
-#create graphs
+#create RSI calcs
+#create subplots for graphs
 
 #TODO v2
 #need to add ability to get multiple tickers
+    #ticker=['AAPL', 'MSFT'], add to quandl call
 
