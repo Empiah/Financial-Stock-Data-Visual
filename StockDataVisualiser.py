@@ -87,7 +87,6 @@ def get_day(month):
 
     month_28 = ('2')
     month_30 = ('4', '6', '9', '11')
-    month_31 = ('1', '3', '5', '7', '8', '10', '12')
 
     if str(month) in month_28:
         month_max = 28
@@ -114,23 +113,130 @@ def get_day(month):
     return day
 
 
-def main():
-    ticker = get_ticker()
+def get_start_date(ticker):
+    #we need to get the full start date
+    print('\nIn this script we will look at stock data over a date range, please enter the start date')
+
+    #now we need to run the above scripts to get the relevant details
     year = get_year()
     month = get_month()
     day = get_day(month)
-    print(ticker, year, month, day)
+
+    start_year = year
+    start_month = month
+    start_day = day
+
+    #now we append dashes inbetween so that it is in the right format to be called from quandl
+    start_date = str(start_year) + '-' + str(start_month) + '-' + str(start_day)
+
+    #we will present this date to the user to confirm it
+    while True:
+        start_confirm = str(input('\nPlease confirm the input is correct [y/n] \nStart Date = {}\nTicker = {}\n'.format(start_date, ticker.upper())))
+        if start_confirm.lower() == 'y':
+            print('Thanks for confirming!\n')
+            start_date = start_date
+            break
+        elif start_confirm.lower() == 'n':
+            #if the user selects no, we will close the script
+            print('\nOkay lets get that information again - the system will close, please run again to start\n')
+            raise SystemExit
+            break
+        else:
+            #we will confirm the output
+            print('Sorry that was not a valid input - please try again')
+            start_date = start_date
+            continue
+
+    return start_date
+
+
+def get_end_date():
+    
+    print('\nWe also need the end date, you can enter a date or choose "latest" \n')
+
+    #this enables the user just to pick the latest date, which would be todays date if they type 'l'
+    while True:
+        end_or_latest = str(input('If you want latest, type "l" and if you want to select, type "n"\n'))
+        if end_or_latest.lower() == 'l':
+            print('Thanks for selecting the most recent date')
+            year = date.today().year
+            month = date.today().month
+            day = date.today().day
+            break
+        #if this type 'n then they can pick a date like they did before
+        elif end_or_latest.lower() == 'n':
+            year = get_year()
+            month = get_month()
+            day = get_day(month)
+            break
+        else:
+            print('{} was not a valid input, please enter "l" for latest date, or "n" to select'. format(end_or_latest))
+            continue
+            
+    end_year = year
+    end_month = month
+    end_day = day
+
+    #now we append dashes inbetween so that it is in the right format to be called from quandl
+    end_date = str(end_year) + '-' + str(end_month) + '-' + str(end_day)
+
+    #we will present this date to the user to confirm it
+    while True:
+        end_confirm = str(input('\nPlease confirm the input is correct\nEnd Date = {}\n[y/n]\n'.format(end_date)))
+        if end_confirm.lower() == 'n':
+            #if the user selects no, we will close the script
+            print('\nOkay lets get that information again - the system will close, please run again to start\n')
+            raise SystemExit
+            break
+        elif end_confirm.lower() == 'y':
+            #we will confirm the output
+            print('Thanks for confirming!')
+            end_date = end_date
+            break
+        else:
+            print('{} was not a valid input, please confirm with "y" or "n"'. format(end_confirm))
+            continue
+    
+    return end_date
+
+
+def get_stock_information(ticker, start_date, end_date):
+    #we need to find a data service that we can use that will allow us to take stock data
+    #we will use Quandl- we have made an account and our API key and data is at the top of this script
+
+    data = quandl.get_table('WIKI/PRICES', ticker = ticker, 
+                        qopts = { 'columns': ['ticker', 'date', 'adj_close'] }, 
+                        date = { 'gte': str(start_date), 'lte': str(end_date) }, 
+                        paginate=True)
+
+    return data
+
+
+
+
+
+
+
+
+def main():
+    ticker = get_ticker()
+    start_date = get_start_date(ticker)
+    end_date = get_end_date()
+    get_stock_information(ticker, start_date, end_date)
+
+    print(ticker, start_date, end_date)
 
 if __name__ == "__main__":
     main()
 
 
-#first we need to find a webservice that will allow us to take in stock data
-#for this we will use Quandl - we have made an accounts
-"""
-data = quandl.get_table('WIKI/PRICES', ticker = ['AAPL', 'MSFT', 'WMT'], 
-                        qopts = { 'columns': ['ticker', 'date', 'adj_close'] }, 
-                        date = { 'gte': '2015-12-31', 'lte': '2016-12-31' }, 
-                        paginate=True)
-print(data.head())
-"""
+
+#TODO v1
+#import stock data
+#create MACD, RSI calcs
+#create graphs
+#when confirming the stock, return name
+
+#TODO v2
+#need to add ability to get multiple tickers
+
