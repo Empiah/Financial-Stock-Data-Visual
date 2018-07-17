@@ -12,13 +12,20 @@ import quandl
 quandl.ApiConfig.api_key = 'EYNDSC9qo_AsccGyr4gR'
 quandl.ApiConfig.api_version = '2015-04-09'
 
+#in an excel document we have a list of all acceptable values that can be entered
+available_tickers = pd.read_csv('Data/ticker_list.csv')
+available_tickers_full = available_tickers
+available_tickers = available_tickers[['ticker']]
+
+
+
+#the first part of this script will be confirming inputs
+############################################
+
+
 #first of all we need to get some input from the user as to what stocks they want to see
 def get_ticker():
     
-    #in an excel document we have a list of all acceptable values that can be entered
-    available_tickers = pd.read_csv('Data/ticker_list.csv')
-    available_tickers = available_tickers[['ticker']]
-
     #general overview to the user of what this script will do
     print('This script will take some user input and display various statistics and graphs')
     
@@ -129,9 +136,12 @@ def get_start_date(ticker):
     #now we append dashes inbetween so that it is in the right format to be called from quandl
     start_date = str(start_year) + '-' + str(start_month) + '-' + str(start_day)
 
+    #here we will pull the stock name from the sheet as we have been give then ticker
+    ticker_confirm = available_tickers_full.loc[available_tickers_full['ticker'] == ticker, 'Company']
+
     #we will present this date to the user to confirm it
     while True:
-        start_confirm = str(input('\nPlease confirm the input is correct [y/n] \nStart Date = {}\nTicker = {}\n'.format(start_date, ticker.upper())))
+        start_confirm = str(input('\nPlease confirm the input is correct [y/n] \nStart Date = {}\nTicker = {}\n'.format(start_date, ticker_confirm)))
         if start_confirm.lower() == 'y':
             print('Thanks for confirming!\n')
             start_date = start_date
@@ -200,6 +210,12 @@ def get_end_date():
     return end_date
 
 
+
+#the second part of this script will be getting the stock data and calculating the statistics we need
+############################################
+
+
+
 def get_stock_information(ticker, start_date, end_date):
     #we need to find a data service that we can use that will allow us to take stock data
     #we will use Quandl- we have made an account and our API key and data is at the top of this script
@@ -210,9 +226,6 @@ def get_stock_information(ticker, start_date, end_date):
                         paginate=True)
 
     return data
-
-
-
 
 
 
@@ -235,7 +248,6 @@ if __name__ == "__main__":
 #import stock data
 #create MACD, RSI calcs
 #create graphs
-#when confirming the stock, return name
 
 #TODO v2
 #need to add ability to get multiple tickers
