@@ -14,10 +14,6 @@ quandl.ApiConfig.api_key = "EYNDSC9qo_AsccGyr4gR"
 
 #in an excel document we have a list of all acceptable values that can be entered
 available_tickers = pd.read_csv('Data/ticker_list.csv')
-available_tickers_full = available_tickers
-available_tickers = available_tickers[['ticker']]
-
-
 
 #the first part of this script will be confirming user inputs
 ############################################
@@ -46,6 +42,7 @@ def get_ticker():
             ticker = ticker.upper()
             break
     return ticker
+
 
 def get_year():
 
@@ -88,6 +85,7 @@ def get_month():
             month = month
             break
     return month
+
 
 def get_day(month):
     #this will get some user input, it will only take valid month inputs
@@ -137,7 +135,7 @@ def get_start_date(ticker):
     start_date = str(start_year) + '-' + str(start_month) + '-' + str(start_day)
 
     #here we will pull the stock name from the sheet as we have been give then ticker
-    ticker_confirm = available_tickers_full.loc[available_tickers_full['ticker'] == ticker, 'Company']
+    ticker_confirm = available_tickers.loc[available_tickers['ticker'] == ticker, 'Company']
 
     #we will present this date to the user to confirm it
     while True:
@@ -229,7 +227,7 @@ def get_stock_information(ticker, start_date, end_date):
     return stock_data
 
 
-def macd_calc(stock_data):
+def tech_indicator_calc(stock_data):
     #the first thing we will work out with our stock data is MACD
     #the formula we will use to calculate the moving average convergence divergence (macd) is as follows
     #(12 Day Exponential Moving Average (EMA) - 26 Day EMA)
@@ -237,7 +235,10 @@ def macd_calc(stock_data):
 
     macd, macdsignal, macdhist = talib.MACD(stock_data['adj_close'], fastperiod=12, slowperiod=26, signalperiod=9)
 
-    return macd, macdsignal, macdhist
+    #we will also calculate the Relative Strength Index
+    rsi = talib.RSI(stock_data['adj_close'], timeperiod=14)
+
+    return macd, macdsignal, macdhist, rsi
 
 
 
@@ -246,13 +247,31 @@ def macd_calc(stock_data):
 
 
 
-def plot_graphs(stock_data, macd, macdsignal, macdhist):
+def plot_graphs(stock_data, macd, macdsignal, macdhist, rsi):
     #we can plot some of the data we have made earlier, price and some macd data
 
-    stock_data.plot(kind = 'line', figsize=(20,14), title='Stock Chart')
-    macd.plot()
-    macdsignal.plot()
-    macdhist.plot()
+    #this will set up the subplot and give it a title
+    f, axarr = plt.subplots(3, sharex=True)
+    f.suptitle('Stock Price and Technical Indicators')
+
+    #this will configure the first graph - the stock price
+    axarr[0].plot(stock_data)
+    axarr[0].set_title('Stock Price')
+
+    #this will plot the MACD, the line is on 0 to reflect convergence/divergence
+    axarr[1].plot(macd)
+    axarr[1].plot(macdsignal)
+    axarr[1].plot(macdhist)
+    axarr[1].set_title('MACD')
+    axarr[1].axhline(0,color='black',ls='--')
+
+    #this plots RSI, the line on 30 reflects oversold and 70 reflects overbought
+    axarr[2].plot(rsi)
+    axarr[2].set_title('RSI')
+    axarr[2].axhline(30,color='green',ls='--')
+    axarr[2].axhline(70,color='red',ls='--')
+
+
     plt.show()
 
 
@@ -263,17 +282,21 @@ def main():
     start_date = get_start_date(ticker)
     end_date = get_end_date()
     stock_data = get_stock_information(ticker, start_date, end_date)
-    macd, macdsignal, macdhist = macd_calc(stock_data)
-    plot_graphs(stock_data, macd, macdsignal, macdhist)
+    macd, macdsignal, macdhist, rsi = tech_indicator_calc(stock_data)
+    plot_graphs(stock_data, macd, macdsignal, macdhist, rsi)
+
+
 
 if __name__ == "__main__":
     main()
 
 
 
-#TODO v1
+#TODO 
 #create RSI calcs
 #create subplots for MACD graphs
+#add more controls around choosing dates. e.g around length also maybe today-1year kind of functionailty too
+
 
 #TODO v2
 #need to add ability to get multiple tickers
