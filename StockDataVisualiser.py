@@ -238,7 +238,13 @@ def macd_calc(stock_data):
     macd, macdsignal, macdhist = talib.MACD(stock_data['adj_close'], fastperiod=12, slowperiod=26, signalperiod=9)
 
     return macd, macdsignal, macdhist
-        
+
+
+
+#the third part of this script will be plotting the data
+###########################################
+
+
 
 def plot_graphs(stock_data, macd, macdsignal, macdhist):
     #we can plot some of the data we have made earlier, price and some macd data
@@ -247,8 +253,8 @@ def plot_graphs(stock_data, macd, macdsignal, macdhist):
     macd.plot()
     macdsignal.plot()
     macdhist.plot()
+    #plt.figure(figsize=(10,7))
     plt.show()
-
 
 
 
@@ -259,7 +265,7 @@ def main():
     end_date = get_end_date()
     stock_data = get_stock_information(ticker, start_date, end_date)
     macd, macdsignal, macdhist = macd_calc(stock_data)
-    plot = plot_graphs(stock_data, macd, macdsignal, macdhist)
+    plot_graphs(stock_data, macd, macdsignal, macdhist)
 
 if __name__ == "__main__":
     main()
