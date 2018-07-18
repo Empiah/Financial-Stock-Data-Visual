@@ -249,11 +249,10 @@ def macd_calc(stock_data):
 def plot_graphs(stock_data, macd, macdsignal, macdhist):
     #we can plot some of the data we have made earlier, price and some macd data
 
-    stock_data.plot()
+    stock_data.plot(kind = 'line', figsize=(20,14), title='Stock Chart')
     macd.plot()
     macdsignal.plot()
     macdhist.plot()
-    #plt.figure(figsize=(10,7))
     plt.show()
 
 
@@ -274,7 +273,7 @@ if __name__ == "__main__":
 
 #TODO v1
 #create RSI calcs
-#create subplots for graphs
+#create subplots for MACD graphs
 
 #TODO v2
 #need to add ability to get multiple tickers
