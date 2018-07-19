@@ -140,6 +140,7 @@ def get_start_date(ticker):
             break
         #if this type 'n then they can pick a date like they did before
         elif start_or_period.lower() == 'n':
+            #this will run some of the other functions to get some more information
             year = get_year()
             month = get_month()
             day = get_day(month)
@@ -332,9 +333,7 @@ if __name__ == "__main__":
 
 
 #TODO 
-#add more controls around choosing dates. e.g around length also maybe today-1year kind of functionailty too
 #add regression to stock ticker (if there is one)
-#comment new code
 
 
 #TODO v2
