@@ -1,11 +1,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from datetime import date
+from datetime import date, timedelta
 import quandl #this is a package that can get stock data for us
 import talib # this is a package that can perform technical analysis for us   
-
-# ~/Dropbox/6.\ Python/Python\ Projects/StockData/Financial-Stock-Data-Visual
 
 #the objective of this is to get stock data to enable us to produce the statistics that we want
 #for this we will use quandl - it is easy to use and has its own package
@@ -122,17 +120,40 @@ def get_start_date(ticker):
     #we need to get the full start date
     print('\nIn this script we will look at stock data over a date range, please enter the start date')
 
-    #now we need to run the above scripts to get the relevant details
-    year = get_year()
-    month = get_month()
-    day = get_day(month)
+    #this enables the user just to pick a time period, or select their own date
+    while True:
+        #here we are presenting the option that the user may want to view, say, the last 9 months
+        #if they type 't' they can do that, if they select 'n' they can enter a date like normal
+        start_or_period = str(input('\nIf you want to view a time period e.g T-6 months, enter "t" and if you want to select, type "n"\n'))
+        if start_or_period.lower() == 't':
+            while True:
+                try:
+                    #this is just the input that we request the information for
+                    t_minus = int(input('Please enter how many months back you want to go, e.g. 3 for 3 months, or 36 for 3 years\n'))
+                except ValueError:
+                    print('Please try again, this was not valid')
+                    continue
+                else:
+                    #this removes the amount of months from the start day, timedelta takes care of this for us
+                    start_date = date.today() - timedelta(days=(t_minus * (365/12)))
+                    break
+            break
+        #if this type 'n then they can pick a date like they did before
+        elif start_or_period.lower() == 'n':
+            year = get_year()
+            month = get_month()
+            day = get_day(month)
 
-    start_year = year
-    start_month = month
-    start_day = day
+            start_year = year
+            start_month = month
+            start_day = day
 
-    #now we append dashes inbetween so that it is in the right format to be called from quandl
-    start_date = str(start_year) + '-' + str(start_month) + '-' + str(start_day)
+            #now we append dashes inbetween so that it is in the right format to be called from quandl
+            start_date = str(start_year) + '-' + str(start_month) + '-' + str(start_day)
+            break
+        else:
+            print('{} was not a valid input, please enter "t" for time period, or "n" to select'. format(start_or_period))
+            continue
 
     #here we will pull the stock name from the sheet as we have been give then ticker
     ticker_confirm = available_tickers.loc[available_tickers['ticker'] == ticker, 'Company']
@@ -151,7 +172,6 @@ def get_start_date(ticker):
         else:
             #we will confirm the output
             print('Sorry that was not a valid input - please try again')
-            start_date = start_date
             continue
 
     return start_date
@@ -285,6 +305,25 @@ def main():
     macd, macdsignal, macdhist, rsi = tech_indicator_calc(stock_data)
     plot_graphs(stock_data, macd, macdsignal, macdhist, rsi)
 
+    while True:
+        replay = str(input('\nDo you want to run this script again? [y/n]:\n'))
+        if replay.lower() == 'y':
+            ticker = get_ticker()
+            start_date = get_start_date(ticker)
+            end_date = get_end_date()
+            stock_data = get_stock_information(ticker, start_date, end_date)
+            macd, macdsignal, macdhist, rsi = tech_indicator_calc(stock_data)
+            plot_graphs(stock_data, macd, macdsignal, macdhist, rsi)
+            continue
+        elif replay.lower() == 'n':
+            print('Okay thanks for confirming!')
+            raise SystemExit
+        else:
+            print('That was not a valid input - please try another')
+            continue
+
+
+
 
 
 if __name__ == "__main__":
@@ -293,12 +332,12 @@ if __name__ == "__main__":
 
 
 #TODO 
-#create RSI calcs
-#create subplots for MACD graphs
 #add more controls around choosing dates. e.g around length also maybe today-1year kind of functionailty too
+#add regression to stock ticker (if there is one)
+#comment new code
 
 
 #TODO v2
 #need to add ability to get multiple tickers
-    #ticker=['AAPL', 'MSFT'], add to quandl call
+#ticker=['AAPL', 'MSFT'], add to quandl call
 
