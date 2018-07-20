@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import date, timedelta
+import statsmodels.api as sm
 import quandl #this is a package that can get stock data for us
 import talib # this is a package that can perform technical analysis for us   
 
@@ -52,7 +53,7 @@ def get_year():
             year = int(input('\nPlease enter the year:\n'))
         #this will return if what is entered is not a string
         except ValueError:
-            print('{} was not understood'.format(year))
+            print('That was not understood, please try again')
             continue
         #this will return if the year that is entered is greater than the current year
         if year > curr_year:
@@ -72,7 +73,7 @@ def get_month():
             month = int(input('\nPlease enter the month in numbers (e.g 7):\n'))
         #this will return if what is entered is not a string
         except ValueError:
-            print('{} was not understood'.format(month))
+            print('That was not understood, please try again')
             continue
         #this will return if what is entered is greater than 12
         if month > 12:
@@ -103,7 +104,7 @@ def get_day(month):
             day = int(input('\nPlease enter the day in numbers (e.g 20):\n'))
         #this will return if what is entered is not a string
         except ValueError:
-            print('{} was not understood'.format(day))
+            print('That was not understood, please try again')
             continue
         #this will return if what is entered is greater than 12
         if day > month_max:
@@ -262,6 +263,16 @@ def tech_indicator_calc(stock_data):
     return macd, macdsignal, macdhist, rsi
 
 
+def stock_regression(stock_data):
+    #this will create some regression data so that we can plot it
+    #at the moment this is just simple linear regression
+    stock_data['regression'] = sm.OLS(stock_data['adj_close'], sm.add_constant(range(len(stock_data.index)),
+                                prepend=True)).fit().fittedvalues
+
+    stock_data['ema12'] = stock_data['adj_close'].ewm(com=12).mean()
+    stock_data['ema26'] = stock_data['adj_close'].ewm(com=26).mean()
+
+    return stock_data
 
 #the third part of this script will be plotting the data
 ###########################################
@@ -277,6 +288,7 @@ def plot_graphs(stock_data, macd, macdsignal, macdhist, rsi):
 
     #this will configure the first graph - the stock price
     axarr[0].plot(stock_data)
+    axarr[0].legend(stock_data)
     axarr[0].set_title('Stock Price')
 
     #this will plot the MACD, the line is on 0 to reflect convergence/divergence
@@ -304,6 +316,7 @@ def main():
     end_date = get_end_date()
     stock_data = get_stock_information(ticker, start_date, end_date)
     macd, macdsignal, macdhist, rsi = tech_indicator_calc(stock_data)
+    stock_data = stock_regression(stock_data)
     plot_graphs(stock_data, macd, macdsignal, macdhist, rsi)
 
     while True:
@@ -314,6 +327,7 @@ def main():
             end_date = get_end_date()
             stock_data = get_stock_information(ticker, start_date, end_date)
             macd, macdsignal, macdhist, rsi = tech_indicator_calc(stock_data)
+            stock_data = stock_regression(stock_data)
             plot_graphs(stock_data, macd, macdsignal, macdhist, rsi)
             continue
         elif replay.lower() == 'n':
@@ -333,10 +347,13 @@ if __name__ == "__main__":
 
 
 #TODO 
-#add regression to stock ticker (if there is one)
+#improve regression
+#add legend to MACD
 
 
 #TODO v2
 #need to add ability to get multiple tickers
 #ticker=['AAPL', 'MSFT'], add to quandl call
+
+
 
