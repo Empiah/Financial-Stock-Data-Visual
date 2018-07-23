@@ -349,6 +349,7 @@ if __name__ == "__main__":
 #TODO 
 #improve regression
 #add legend to MACD
+#add some fundemental indicators
 
 
 #TODO v2
