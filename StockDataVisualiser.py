@@ -1,8 +1,8 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from datetime import date, timedelta
-import statsmodels.api as sm
+import pandas as pd #this makes it easy to handle data
+import numpy as np #this is a useful numerical package
+import matplotlib.pyplot as plt #this is for plotting graphs
+from datetime import date, timedelta #this is for manpulating dates
+import statsmodels.api as sm #this is for regression
 import quandl #this is a package that can get stock data for us
 import talib # this is a package that can perform technical analysis for us   
 
@@ -264,15 +264,19 @@ def tech_indicator_calc(stock_data):
 
 
 def stock_regression(stock_data):
+
+    #here we are simply creating some moving averages, for both 12 and 26 length periods
+    stock_data['ema12'] = stock_data['adj_close'].ewm(com=12).mean()
+    stock_data['ema26'] = stock_data['adj_close'].ewm(com=26).mean()
+
     #this will create some regression data so that we can plot it
     #at the moment this is just simple linear regression
     stock_data['regression'] = sm.OLS(stock_data['adj_close'], sm.add_constant(range(len(stock_data.index)),
                                 prepend=True)).fit().fittedvalues
 
-    stock_data['ema12'] = stock_data['adj_close'].ewm(com=12).mean()
-    stock_data['ema26'] = stock_data['adj_close'].ewm(com=26).mean()
 
     return stock_data
+
 
 #the third part of this script will be plotting the data
 ###########################################
@@ -287,14 +291,15 @@ def plot_graphs(stock_data, macd, macdsignal, macdhist, rsi):
     f.suptitle('Stock Price and Technical Indicators')
 
     #this will configure the first graph - the stock price
-    axarr[0].plot(stock_data)
+    axarr[0].plot(stock_data[['adj_close', 'ema12', 'ema26']])
+    axarr[0].plot(stock_data['regression'], 'g--', linewidth=2, markersize=1)
     axarr[0].legend(stock_data)
     axarr[0].set_title('Stock Price')
 
     #this will plot the MACD, the line is on 0 to reflect convergence/divergence
     axarr[1].plot(macd)
     axarr[1].plot(macdsignal)
-    axarr[1].plot(macdhist)
+    #axarr[1].plot(macdhist) - we may add this back in, but for the time being lets not
     axarr[1].set_title('MACD')
     axarr[1].axhline(0,color='black',ls='--')
 
@@ -349,12 +354,9 @@ if __name__ == "__main__":
 #TODO 
 #improve regression
 #add legend to MACD
-#add some fundemental indicators
+#add some fundemental indicators?
+#replace SystemExits
 
-
-#TODO v2
-#need to add ability to get multiple tickers
-#ticker=['AAPL', 'MSFT'], add to quandl call
 
 
 
