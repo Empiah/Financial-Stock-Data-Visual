@@ -257,7 +257,7 @@ def tech_indicator_calc(stock_data):
 
     macd, macdsignal, macdhist = talib.MACD(stock_data['adj_close'], fastperiod=12, slowperiod=26, signalperiod=9)
 
-    #we will also calculate the Relative Strength Index
+    #we will also calculate the Relative Strength Index (RSI)
     rsi = talib.RSI(stock_data['adj_close'], timeperiod=14)
 
     return macd, macdsignal, macdhist, rsi
