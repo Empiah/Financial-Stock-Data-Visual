@@ -1,15 +1,21 @@
-import pandas as pd #this makes it easy to handle data
-import numpy as np #this is a useful numerical package
-import matplotlib.pyplot as plt #this is for plotting graphs
-from datetime import date, timedelta #this is for manpulating dates
-import statsmodels.api as sm #this is for regression
-from alpha_vantage.timeseries import TimeSeries
-#import quandl #this is a package that can get stock data for us
-import talib # this is a package that can perform technical analysis for us   
-from pytrends.request import TrendReq #this is a package to get google trends data
+from datetime import date, timedelta  # this is for manpulating dates
+
+import matplotlib.pyplot as plt  # this is for plotting graphs
+import matplotlib.lines as mlines #for creating our own legend
+import numpy as np  # this is a useful numerical package
+import pandas as pd  # this makes it easy to handle data
+import statsmodels.api as sm  # this is for regression
+import talib  # this is a package that can perform technical analysis for us
+from alpha_vantage.timeseries import TimeSeries #for stock information
+from pandas.plotting import \
+    register_matplotlib_converters  # registering matplotlib converters
+from pytrends.request import \
+    TrendReq  # this is a package to get google trends data
+
+register_matplotlib_converters() # registering matplotlib converters
+
 
 #the objective of this is to get stock data to enable us to produce the statistics that we want
-#for this we will use quandl - it is easy to use and has its own package
 
 #in an excel document we have a list of all acceptable values that can be entered
 available_tickers = pd.read_csv('Data/ticker_list.csv')
@@ -114,6 +120,8 @@ def tech_indicator_calc(stock_data):
     #we will also calculate the Relative Strength Index (RSI)
     rsi = talib.RSI(stock_data['adjusted close'], timeperiod=14)
 
+    print(macd, macdhist)
+
     return macd, macdsignal, macdhist, rsi
 
 
@@ -152,6 +160,9 @@ def plot_graphs(stock_data, google_trends, macd, macdsignal, macdhist, rsi, tick
     axarr[1].plot(macd)
     axarr[1].plot(macdsignal)
     #axarr[1].plot(macdhist) - we may add this back in, but for the time being lets not
+    macd_legend = mlines.Line2D([], [], color='C0', label='macd-12') #have to create a custom legend here
+    macdsignal_legend = mlines.Line2D([], [], color='C1', label='macd-26') #have to create a custom legend here
+    axarr[1].legend(handles=[macd_legend, macdsignal_legend])
     axarr[1].set_title('MACD')
     axarr[1].axhline(0,color='black',ls='--')
 
@@ -203,14 +214,10 @@ if __name__ == "__main__":
 
 #TODO 
 #improve regression
-#add legend to MACD
 #add some fundemental indicators?
 #replace SystemExits
-#change the name on adjusted close
 #replace datetime.date with new
 #get stock list from new source
-#better google trends info?
-
-
-
-
+#pytrends - testing diff functionality
+#app
+#points that register macd movement
