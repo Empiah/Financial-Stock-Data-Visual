@@ -11,7 +11,7 @@ from pandas.plotting import \
     register_matplotlib_converters  # registering matplotlib converters
 from pytrends.request import \
     TrendReq  # this is a package to get google trends data
-
+        
 register_matplotlib_converters() # registering matplotlib converters
 
 
@@ -120,7 +120,7 @@ def tech_indicator_calc(stock_data):
     #we will also calculate the Relative Strength Index (RSI)
     rsi = talib.RSI(stock_data['adjusted close'], timeperiod=14)
 
-    print(macd, macdhist)
+    #print(macd, macdhist)
 
     return macd, macdsignal, macdhist, rsi
 
@@ -130,6 +130,20 @@ def stock_regression(stock_data):
     #here we are simply creating some moving averages, for both 12 and 26 length periods
     stock_data['ema12'] = stock_data['adjusted close'].ewm(com=12).mean()
     stock_data['ema26'] = stock_data['adjusted close'].ewm(com=26).mean()
+    
+    #here we are looking at adding in points to show when the moverage average crosses
+    #the first line will get the difference, and the first will shift it up
+    stock_data['ema_diff'] = stock_data['ema26'] - stock_data['ema12']
+    stock_data['ema_diff_shift'] = stock_data['ema_diff'].shift(-1)
+    
+    """
+    stock_data['ema_diff_up'] = np.where(stock_data['ema_diff'].between(0.1, -0.1) & (stock_data['ema_diff_shift'] > 0, 1, 0))
+    stock_data['ema_diff_down'] = np.where(stock_data['ema_diff'].between(0.1, -0.1) & (stock_data['ema_diff_shift'] < 0, 1, 0)) 
+    """
+
+    print(stock_data.head())
+    print(stock_data.tail())
+    print(stock_data.shape)
 
     #this will create some regression data so that we can plot it
     #at the moment this is just simple linear regression
@@ -220,4 +234,4 @@ if __name__ == "__main__":
 #get stock list from new source
 #pytrends - testing diff functionality
 #app
-#points that register macd movement
+#points that register macd movement - spit out to csv to look
