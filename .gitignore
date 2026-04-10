@@ -56,3 +56,10 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+.env
+login.csv
