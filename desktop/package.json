@@ -1,0 +1,37 @@
+{
+  "name": "stock-visualizer",
+  "version": "0.1.0",
+  "description": "Lightweight Mac desktop app that visualizes stock price data with MACD, RSI, EMAs, regression trendline and dual-signal buy/sell markers. TypeScript port of StockDataVisualiser.py.",
+  "main": "./out/main/index.js",
+  "author": "Financial-Stock-Data-Visual",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build": "npm run typecheck && electron-vite build",
+    "start": "electron-vite preview",
+    "dist:mac": "npm run build && electron-builder --mac"
+  },
+  "dependencies": {
+    "google-trends-api": "^4.9.2",
+    "lightweight-charts": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "technicalindicators": "^3.1.0",
+    "yahoo-finance2": "^2.11.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3",
+    "electron-vite": "^2.2.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}
