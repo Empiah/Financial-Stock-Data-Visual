@@ -1,5 +1,23 @@
-import yahooFinance from 'yahoo-finance2'
+import type YahooFinanceInstance from 'yahoo-finance2'
 import type { PricePoint, StockResult } from '../shared/types'
+
+// yahoo-finance2 v2+ is ESM-only. electron-vite bundles the main process as
+// CommonJS (externalizeDepsPlugin -> runtime require), so a static
+// `import yahooFinance from 'yahoo-finance2'` trips
+// ERR_PACKAGE_PATH_NOT_EXPORTED at runtime. We dodge the bundler by hiding
+// the import specifier behind `new Function(...)`, which leaves the call as
+// a native Node `import()` that resolves the ESM package at runtime.
+const nativeImport = new Function('m', 'return import(m)') as (
+  m: string
+) => Promise<{ default: YahooFinanceInstance }>
+
+let yahooPromise: Promise<YahooFinanceInstance> | null = null
+function getYahooFinance(): Promise<YahooFinanceInstance> {
+  if (!yahooPromise) {
+    yahooPromise = nativeImport('yahoo-finance2').then((m) => m.default)
+  }
+  return yahooPromise
+}
 
 /**
  * Port of get_stock_information() in ../../../StockDataVisualiser.py (lines 34–60).
@@ -9,6 +27,8 @@ import type { PricePoint, StockResult } from '../shared/types'
 export async function fetchDailyPrices(ticker: string): Promise<StockResult> {
   const symbol = ticker.trim().toUpperCase()
   if (!symbol) throw new Error('Ticker is required')
+
+  const yahooFinance = await getYahooFinance()
 
   // yahoo-finance2 prints a notice to stdout on first call; silence it.
   yahooFinance.suppressNotices(['yahooSurvey'])
