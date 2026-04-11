@@ -11,27 +11,65 @@ const nativeImport = new Function('m', 'return import(m)') as (
   m: string
 ) => Promise<unknown>
 
-// The returned module namespace's shape varies across yahoo-finance2 versions
-// and CJS/ESM interop paths — the instance can sit at `mod`, `mod.default`,
-// or `mod.default.default` (double-wrapped when a CJS package synthesises a
-// default that itself has a default). Probe all three and pick whichever
-// actually exposes the `quote` method.
+// The returned module namespace's shape varies across yahoo-finance2
+// versions and CJS/ESM interop paths. In older versions the default export
+// was `new YahooFinance()` (an instance with a `quote` method). In the
+// newer ESM-only releases the default is either the class itself (needs
+// `new`), a factory function, or a nested `{ default: instance }`. Probe
+// every shape we can think of, and if none hit, throw with a detailed
+// dump of what we actually got so we can fix it targeted.
+//
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Any = any
+function hasQuote(x: Any): x is YahooFinanceInstance {
+  return !!x && typeof x.quote === 'function'
+}
 function resolveInstance(mod: unknown): YahooFinanceInstance {
-  const candidates: unknown[] = [
-    mod,
-    (mod as { default?: unknown })?.default,
-    (mod as { default?: { default?: unknown } })?.default?.default
-  ]
-  for (const c of candidates) {
-    if (c && typeof (c as { quote?: unknown }).quote === 'function') {
-      return c as YahooFinanceInstance
+  const m = mod as Any
+
+  // 1. Plain object with `quote` at the top level
+  if (hasQuote(m)) return m
+
+  // 2. ESM default export that is the instance directly
+  if (hasQuote(m?.default)) return m.default
+
+  // 3. Double-wrapped default (CJS-in-ESM interop)
+  if (hasQuote(m?.default?.default)) return m.default.default
+
+  // 4. Default export is a class constructor — `new` it
+  if (typeof m?.default === 'function') {
+    try {
+      const inst = new m.default()
+      if (hasQuote(inst)) return inst
+    } catch {
+      /* fall through to factory attempt */
+    }
+    // 5. Default export is a factory function — call it
+    try {
+      const inst = m.default()
+      if (hasQuote(inst)) return inst
+    } catch {
+      /* fall through to diagnostic */
     }
   }
-  const keys =
-    mod && typeof mod === 'object' ? Object.keys(mod as object).join(', ') : typeof mod
-  throw new Error(
-    `Could not resolve yahoo-finance2 instance from module namespace (keys: ${keys})`
-  )
+
+  // 6. Diagnostic: dump everything we can about the shape so we can fix it.
+  const diag: Record<string, unknown> = {}
+  try {
+    diag.topKeys = m ? Object.keys(m).slice(0, 20) : typeof m
+    diag.defaultType = typeof m?.default
+    diag.defaultCtor = m?.default?.constructor?.name
+    if (m?.default && typeof m.default === 'object') {
+      diag.defaultKeys = Object.keys(m.default).slice(0, 20)
+      const proto = Object.getPrototypeOf(m.default)
+      if (proto && proto !== Object.prototype) {
+        diag.defaultProtoKeys = Object.getOwnPropertyNames(proto).slice(0, 20)
+      }
+    }
+  } catch (e) {
+    diag.introspectionError = (e as Error).message
+  }
+  throw new Error(`yahoo-finance2 shape: ${JSON.stringify(diag)}`)
 }
 
 let yahooPromise: Promise<YahooFinanceInstance> | null = null
