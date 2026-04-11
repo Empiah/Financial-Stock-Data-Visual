@@ -30,9 +30,6 @@ export async function fetchDailyPrices(ticker: string): Promise<StockResult> {
 
   const yahooFinance = await getYahooFinance()
 
-  // yahoo-finance2 prints a notice to stdout on first call; silence it.
-  yahooFinance.suppressNotices(['yahooSurvey'])
-
   const period1 = '2020-01-01'
   const period2 = new Date()
 
