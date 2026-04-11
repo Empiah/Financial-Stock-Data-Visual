@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import type { LineData, SeriesMarker, Time } from 'lightweight-charts'
 import { createThemedChart } from './chartBase'
-import type { Series } from '../lib/indicators'
-import type { SignalMarker } from '../lib/signals'
+import type { Series } from '../analysis/indicators'
+import type { SignalMarker } from '../analysis/signals'
 
 interface Props {
   macdFast: Series[]

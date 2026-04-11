@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react'
 import type { ISeriesApi, LineData, SeriesMarker, Time } from 'lightweight-charts'
 import { LineStyle } from 'lightweight-charts'
 import { createThemedChart } from './chartBase'
-import type { Candle, Series } from '../lib/indicators'
-import type { SignalMarker } from '../lib/signals'
+import type { Candle, Series } from '../analysis/indicators'
+import type { SignalMarker } from '../analysis/signals'
 
 interface Props {
   candles: Candle[]

@@ -4,8 +4,8 @@ import { PriceChart } from './components/PriceChart'
 import { MacdChart } from './components/MacdChart'
 import { RsiChart } from './components/RsiChart'
 import { TrendsChart } from './components/TrendsChart'
-import { computeIndicators, type Candle } from './lib/indicators'
-import { detectSignals } from './lib/signals'
+import { computeIndicators, type Candle } from './analysis/indicators'
+import { detectSignals } from './analysis/signals'
 import type { StockResult, TrendPoint } from '../../shared/types'
 
 interface LoadedState {
