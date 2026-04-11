@@ -9,12 +9,35 @@ import type { PricePoint, StockResult } from '../shared/types'
 // a native Node `import()` that resolves the ESM package at runtime.
 const nativeImport = new Function('m', 'return import(m)') as (
   m: string
-) => Promise<{ default: YahooFinanceInstance }>
+) => Promise<unknown>
+
+// The returned module namespace's shape varies across yahoo-finance2 versions
+// and CJS/ESM interop paths — the instance can sit at `mod`, `mod.default`,
+// or `mod.default.default` (double-wrapped when a CJS package synthesises a
+// default that itself has a default). Probe all three and pick whichever
+// actually exposes the `quote` method.
+function resolveInstance(mod: unknown): YahooFinanceInstance {
+  const candidates: unknown[] = [
+    mod,
+    (mod as { default?: unknown })?.default,
+    (mod as { default?: { default?: unknown } })?.default?.default
+  ]
+  for (const c of candidates) {
+    if (c && typeof (c as { quote?: unknown }).quote === 'function') {
+      return c as YahooFinanceInstance
+    }
+  }
+  const keys =
+    mod && typeof mod === 'object' ? Object.keys(mod as object).join(', ') : typeof mod
+  throw new Error(
+    `Could not resolve yahoo-finance2 instance from module namespace (keys: ${keys})`
+  )
+}
 
 let yahooPromise: Promise<YahooFinanceInstance> | null = null
 function getYahooFinance(): Promise<YahooFinanceInstance> {
   if (!yahooPromise) {
-    yahooPromise = nativeImport('yahoo-finance2').then((m) => m.default)
+    yahooPromise = nativeImport('yahoo-finance2').then(resolveInstance)
   }
   return yahooPromise
 }
