@@ -10,74 +10,69 @@ export interface Series<T = number> {
   value: T
 }
 
+export interface IndicatorParams {
+  macdFast: number
+  macdSlow: number
+  macdSignal: number
+  rsiPeriod: number
+}
+
+export const DEFAULT_PARAMS: IndicatorParams = {
+  macdFast: 12,
+  macdSlow: 26,
+  macdSignal: 9,
+  rsiPeriod: 14
+}
+
 export interface IndicatorResult {
-  /** MACD fast EMA (close ema-12) */
-  macdFast: Series[]
-  /** MACD slow EMA (close ema-26) */
-  macdSlow: Series[]
-  /** MACD histogram */
+  macdLine: Series[]
+  macdSignalLine: Series[]
   macdHist: Series[]
   rsi: Series[]
   ema12: Series[]
   ema26: Series[]
   regression: Series[]
+  /** Latest values for the metrics bar */
+  latest: { price: number; macd: number | null; rsi: number | null }
 }
 
-/**
- * Ports tech_indicator_calc() + stock_regression() from
- * ../../../../StockDataVisualiser.py (lines 78–142).
- *
- * Python uses talib.MACD(close, 12, 26, 9) and talib.RSI(close, 14);
- * the `technicalindicators` npm package uses the same defaults.
- *
- * One small behavioural note: Python's pandas `ewm(com=12).mean()` on
- * lines 116–117 uses the "center-of-mass" form (alpha = 1/(1+com)), which
- * is NOT the same as a standard N-period EMA. We deliberately switch to
- * a standard EMA here (period=12 / period=26) because (a) the purpose in
- * the original is just to draw two smoothed lines over price, (b) standard
- * EMAs are what traders expect when they see "ema12 / ema26" in a legend,
- * and (c) it keeps the implementation consistent with the MACD fast/slow
- * EMAs we compute on the same price series.
- */
-export function computeIndicators(candles: Candle[]): IndicatorResult {
+export function computeIndicators(
+  candles: Candle[],
+  params: IndicatorParams = DEFAULT_PARAMS
+): IndicatorResult {
   const closes = candles.map((c) => c.close)
   const dates = candles.map((c) => c.date)
 
-  // MACD(12, 26, 9). The package returns one entry per fully-formed window,
-  // so it's shorter than `closes` — pad from the right to align on dates.
   const macd = MACD.calculate({
     values: closes,
-    fastPeriod: 12,
-    slowPeriod: 26,
-    signalPeriod: 9,
+    fastPeriod: params.macdFast,
+    slowPeriod: params.macdSlow,
+    signalPeriod: params.macdSignal,
     SimpleMAOscillator: false,
     SimpleMASignalLine: false
   })
   const macdOffset = closes.length - macd.length
-  const macdFast: Series[] = []
-  const macdSlow: Series[] = []
+  const macdLine: Series[] = []
+  const macdSignalLine: Series[] = []
   const macdHist: Series[] = []
   for (let i = 0; i < macd.length; i++) {
     const d = dates[macdOffset + i]!
-    // The Python script plots "macd" (the MACD line) as `macd_12` and
-    // the signal line as `macd_26`. We reuse those names in the UI.
-    if (macd[i]!.MACD != null) macdFast.push({ date: d, value: macd[i]!.MACD! })
-    if (macd[i]!.signal != null) macdSlow.push({ date: d, value: macd[i]!.signal! })
+    if (macd[i]!.MACD != null) macdLine.push({ date: d, value: macd[i]!.MACD! })
+    if (macd[i]!.signal != null)
+      macdSignalLine.push({ date: d, value: macd[i]!.signal! })
     if (macd[i]!.histogram != null)
       macdHist.push({ date: d, value: macd[i]!.histogram! })
   }
 
-  // RSI(14)
-  const rsiValues = RSI.calculate({ values: closes, period: 14 })
+  const rsiValues = RSI.calculate({ values: closes, period: params.rsiPeriod })
   const rsiOffset = closes.length - rsiValues.length
   const rsi: Series[] = rsiValues.map((v, i) => ({
     date: dates[rsiOffset + i]!,
     value: v
   }))
 
-  // EMA-12, EMA-26 on the price (for the top panel overlay)
-  const ema12Raw = EMA.calculate({ values: closes, period: 12 })
-  const ema26Raw = EMA.calculate({ values: closes, period: 26 })
+  const ema12Raw = EMA.calculate({ values: closes, period: params.macdFast })
+  const ema26Raw = EMA.calculate({ values: closes, period: params.macdSlow })
   const ema12: Series[] = ema12Raw.map((v, i) => ({
     date: dates[closes.length - ema12Raw.length + i]!,
     value: v
@@ -89,13 +84,22 @@ export function computeIndicators(candles: Candle[]): IndicatorResult {
 
   const regression = linearRegression(dates, closes)
 
-  return { macdFast, macdSlow, macdHist, rsi, ema12, ema26, regression }
+  const lastMacd = macdLine.length > 0 ? macdLine[macdLine.length - 1]!.value : null
+  const lastRsi = rsi.length > 0 ? rsi[rsi.length - 1]!.value : null
+  const lastPrice = closes.length > 0 ? closes[closes.length - 1]! : 0
+
+  return {
+    macdLine,
+    macdSignalLine,
+    macdHist,
+    rsi,
+    ema12,
+    ema26,
+    regression,
+    latest: { price: lastPrice, macd: lastMacd, rsi: lastRsi }
+  }
 }
 
-/**
- * Plain least-squares fit replacing statsmodels.OLS in stock_regression()
- * (StockDataVisualiser.py:138-139). x = index, y = close.
- */
 export function linearRegression(dates: string[], closes: number[]): Series[] {
   const n = closes.length
   if (n === 0) return []
@@ -116,4 +120,59 @@ export function linearRegression(dates: string[], closes: number[]): Series[] {
     date: dates[i]!,
     value: intercept + slope * i
   }))
+}
+
+/** Compute % change for various lookback windows from price array */
+export function computePerformance(
+  prices: { date: string; close: number }[]
+): Record<string, number | null> {
+  if (prices.length < 2) return {}
+  const last = prices[prices.length - 1]!
+  const periods: Record<string, number> = {
+    '1D': 1,
+    '1W': 5,
+    '1M': 21,
+    '3M': 63,
+    '6M': 126,
+    '1Y': 252
+  }
+  const result: Record<string, number | null> = {}
+  for (const [label, days] of Object.entries(periods)) {
+    const idx = prices.length - 1 - days
+    if (idx >= 0) {
+      const prev = prices[idx]!.close
+      result[label] = ((last.close - prev) / prev) * 100
+    } else {
+      result[label] = null
+    }
+  }
+  return result
+}
+
+/** Rebase two price series to 100 at their common start for relative comparison */
+export function rebaseSeries(
+  stock: Series[],
+  benchmark: Series[]
+): { stock: Series[]; benchmark: Series[] } {
+  if (stock.length === 0 || benchmark.length === 0)
+    return { stock: [], benchmark: [] }
+
+  const benchByDate = new Map(benchmark.map((s) => [s.date, s.value]))
+  // Find first date where both have data
+  let startStock: number | null = null
+  let startBench: number | null = null
+  const alignedStock: Series[] = []
+  const alignedBench: Series[] = []
+
+  for (const s of stock) {
+    const bv = benchByDate.get(s.date)
+    if (bv == null) continue
+    if (startStock == null) {
+      startStock = s.value
+      startBench = bv
+    }
+    alignedStock.push({ date: s.date, value: (s.value / startStock!) * 100 })
+    alignedBench.push({ date: s.date, value: (bv / startBench!) * 100 })
+  }
+  return { stock: alignedStock, benchmark: alignedBench }
 }

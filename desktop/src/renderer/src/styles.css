@@ -10,180 +10,191 @@
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
-html,
-body,
-#root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-  overflow: hidden;
+html, body, #root {
+  margin: 0; padding: 0; height: 100%;
+  background: var(--bg); color: var(--text);
 }
 
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
+/* ─── Titlebar ─────────────────────────────── */
 .titlebar {
   height: 38px;
   -webkit-app-region: drag;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-dim);
-  font-size: 13px;
-  user-select: none;
-  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); font-size: 13px;
+  user-select: none; flex-shrink: 0;
 }
 
+/* ─── Toolbar ──────────────────────────────── */
 .toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  display: flex; align-items: center; gap: 12px;
   padding: 10px 16px;
   border-bottom: 1px solid var(--panel-border);
-  background: var(--panel);
-  flex-shrink: 0;
+  background: var(--panel); flex-shrink: 0;
 }
+.toolbar h1 { margin: 0; font-size: 14px; font-weight: 600; }
+.toolbar .status { margin-left: auto; color: var(--text-dim); font-size: 12px; }
 
-.toolbar h1 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.toolbar .status {
-  margin-left: auto;
-  color: var(--text-dim);
-  font-size: 12px;
-}
-
-.ticker-input {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
+/* ─── Ticker Input ─────────────────────────── */
+.ticker-input { position: relative; display: flex; align-items: center; }
 .ticker-input input {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 13px;
-  width: 220px;
-  outline: none;
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  padding: 6px 10px; font-size: 13px; width: 220px; outline: none;
   text-transform: uppercase;
 }
-
-.ticker-input input:focus {
-  border-color: var(--accent);
-}
-
+.ticker-input input:focus { border-color: var(--accent); }
 .ticker-input .suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  max-height: 260px;
-  overflow: auto;
-  z-index: 10;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px;
+  background: var(--panel); border: 1px solid var(--panel-border); border-radius: 6px;
+  max-height: 260px; overflow: auto; z-index: 10;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
 }
-
 .ticker-input .suggestions button {
-  display: block;
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  color: var(--text);
-  padding: 6px 10px;
-  font-size: 12px;
-  cursor: pointer;
+  display: block; width: 100%; text-align: left; background: transparent;
+  border: none; color: var(--text); padding: 6px 10px; font-size: 12px; cursor: pointer;
 }
-
 .ticker-input .suggestions button:hover,
-.ticker-input .suggestions button.active {
-  background: #21262d;
+.ticker-input .suggestions button.active { background: #21262d; }
+
+/* ─── Metrics Bar ──────────────────────────── */
+.metrics-bar {
+  display: flex; align-items: center; gap: 16px;
+  padding: 8px 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.metric { display: flex; flex-direction: column; gap: 1px; }
+.metric-label {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-dim);
+}
+.metric-value { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.metric-divider {
+  width: 1px; height: 28px; background: var(--panel-border); margin: 0 4px;
+}
+.positive { color: var(--buy); }
+.negative { color: var(--sell); }
+
+/* ─── Settings Panel ───────────────────────── */
+.settings-panel {
+  display: flex; align-items: center; gap: 16px;
+  padding: 6px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0; flex-wrap: wrap;
+}
+.settings-group {
+  display: flex; align-items: center; gap: 8px;
+}
+.settings-title {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--text-dim); font-weight: 600;
+}
+.setting-field {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-dim);
+}
+.setting-field input {
+  width: 44px; background: var(--panel); color: var(--text);
+  border: 1px solid var(--panel-border); border-radius: 4px;
+  padding: 3px 6px; font-size: 11px; text-align: center; outline: none;
+}
+.setting-field input:focus { border-color: var(--accent); }
+.setting-toggle {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-dim); cursor: pointer;
+}
+.setting-toggle input[type="checkbox"] {
+  accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer;
 }
 
-.toolbar button.go {
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.toolbar button.go:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
+/* ─── Charts ───────────────────────────────── */
 .charts {
   flex: 1;
   display: grid;
-  grid-template-rows: 4fr 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 12px 16px 16px;
-  overflow: hidden;
-  min-height: 0;
+  grid-template-rows: 5fr 2fr 2fr 1fr;
+  gap: 6px;
+  padding: 8px 16px;
+  min-height: 400px;
 }
-
 .charts.no-trends {
-  grid-template-rows: 4fr 1fr 1fr;
+  grid-template-rows: 5fr 2fr 2fr;
 }
 
 .panel {
   background: var(--panel);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 8px 12px 12px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
+  border: 1px solid var(--panel-border); border-radius: 8px;
+  padding: 6px 10px 10px;
+  display: flex; flex-direction: column; min-height: 0;
 }
-
 .panel h2 {
-  margin: 0 0 4px 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  margin: 0 0 2px 0; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.panel .chart { flex: 1; min-height: 0; }
+
+/* ─── Period Selector ──────────────────────── */
+.period-selector {
+  display: flex; justify-content: center; gap: 4px;
+  padding: 8px 16px;
+  flex-shrink: 0;
+}
+.period-selector button {
+  background: var(--panel); color: var(--text-dim);
+  border: 1px solid var(--panel-border); border-radius: 6px;
+  padding: 4px 12px; font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+}
+.period-selector button:hover { border-color: var(--accent); color: var(--text); }
+.period-selector button.active {
+  background: var(--accent); color: #fff; border-color: var(--accent);
 }
 
-.panel .chart {
-  flex: 1;
-  min-height: 0;
+/* ─── Backtest ─────────────────────────────── */
+.backtest {
+  padding: 8px 16px 16px;
+  flex-shrink: 0;
+}
+.backtest h2 {
+  margin: 0 0 6px 0; font-size: 12px; font-weight: 600;
+  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.04em;
+}
+.backtest-empty { color: var(--text-dim); font-size: 12px; margin: 0; }
+.backtest-summary {
+  font-size: 12px; color: var(--text-dim); margin-bottom: 8px;
+}
+.backtest-table-wrap {
+  overflow-x: auto; max-height: 200px; overflow-y: auto;
+}
+.backtest-table {
+  width: 100%; border-collapse: collapse; font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.backtest-table th {
+  text-align: left; padding: 4px 8px;
+  color: var(--text-dim); font-weight: 600; border-bottom: 1px solid var(--panel-border);
+  position: sticky; top: 0; background: var(--bg);
+}
+.backtest-table td {
+  padding: 3px 8px; border-bottom: 1px solid var(--panel-border);
+  color: var(--text);
 }
 
+/* ─── Empty / Error ────────────────────────── */
 .empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: var(--text-dim);
-  font-size: 14px;
-  text-align: center;
-  padding: 24px;
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: var(--text-dim); font-size: 14px;
+  text-align: center; padding: 24px;
 }
-
-.error {
-  color: var(--sell);
-}
+.error { color: var(--sell); }

@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react'
-import type { LineData, SeriesMarker, Time } from 'lightweight-charts'
+import type { HistogramData, LineData, SeriesMarker, Time } from 'lightweight-charts'
 import { createThemedChart } from './chartBase'
 import type { Series } from '../analysis/indicators'
 import type { SignalMarker } from '../analysis/signals'
 
 interface Props {
-  macdFast: Series[]
-  macdSlow: Series[]
+  macdLine: Series[]
+  macdSignalLine: Series[]
+  macdHist: Series[]
   buy: SignalMarker[]
   sell: SignalMarker[]
 }
@@ -21,11 +22,36 @@ export function MacdChart(props: Props): JSX.Element {
     if (!containerRef.current) return
     const chart = createThemedChart(containerRef.current)
 
-    const macdLine = chart.addLineSeries({ color: '#2f81f7', lineWidth: 1 })
-    macdLine.setData(toLine(props.macdFast))
+    // Histogram bars — green when positive, red when negative
+    const histSeries = chart.addHistogramSeries({
+      priceLineVisible: false,
+      lastValueVisible: false
+    })
+    histSeries.setData(
+      props.macdHist.map(
+        (p): HistogramData<Time> => ({
+          time: p.date as Time,
+          value: p.value,
+          color: p.value >= 0 ? 'rgba(38,162,105,0.5)' : 'rgba(229,72,77,0.5)'
+        })
+      )
+    )
 
-    const signalLine = chart.addLineSeries({ color: '#f0883e', lineWidth: 1 })
-    signalLine.setData(toLine(props.macdSlow))
+    const macdLine = chart.addLineSeries({ color: '#2f81f7', lineWidth: 2 })
+    macdLine.setData(toLine(props.macdLine))
+
+    const signalLine = chart.addLineSeries({ color: '#f0883e', lineWidth: 2 })
+    signalLine.setData(toLine(props.macdSignalLine))
+
+    // Zero line
+    macdLine.createPriceLine({
+      price: 0,
+      color: '#7d8590',
+      lineWidth: 1,
+      lineStyle: 2,
+      axisLabelVisible: false,
+      title: ''
+    })
 
     const markers: SeriesMarker<Time>[] = [
       ...props.buy.map(
@@ -48,7 +74,6 @@ export function MacdChart(props: Props): JSX.Element {
     macdLine.setMarkers(markers)
 
     chart.timeScale().fitContent()
-
     return () => chart.remove()
   }, [props])
 

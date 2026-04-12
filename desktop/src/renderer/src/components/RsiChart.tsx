@@ -20,7 +20,7 @@ export function RsiChart(props: Props): JSX.Element {
     if (!containerRef.current) return
     const chart = createThemedChart(containerRef.current)
 
-    const rsiLine = chart.addLineSeries({ color: '#8957e5', lineWidth: 1 })
+    const rsiLine = chart.addLineSeries({ color: '#8957e5', lineWidth: 2 })
     rsiLine.setData(toLine(props.rsi))
 
     // Reference lines at 30 / 70 — ports of axarr[2].axhline(30/70) in
